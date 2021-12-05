@@ -37,7 +37,7 @@ void day4() {
                     }
                 }
             }
-            bool hasWon() const {
+            bool bingo() const {
                 for (int n=0; n<5; n++) {
                     if (isColConnected(n) || isRowConnected(n)) {
                         return true;
@@ -103,7 +103,7 @@ void day4() {
         for (int bi=0; bi<boards.size(); ++bi) {
             Board &board = boards[bi];
             board.markNumber(draw);
-            if (board.hasWon()) {
+            if (board.bingo()) {
                 int sum = board.computeSumOfUnmarkedNumbers();
 
                 std::cout << "--- Day 4 ---\r\n";
@@ -116,5 +116,32 @@ void day4() {
             }
         }
     }
-    inputStream.close();
+
+    // Part 2
+    int numWinners = 0;
+    std::vector<bool> winners(boards.size(), false);
+
+    for (int di=0; di<draws.size() && (numWinners<boards.size()); ++di) {
+        int draw = draws[di];
+        for (int bi=0; bi<boards.size(); ++bi) {
+            if (!winners[bi]) {
+                Board &board = boards[bi];
+                board.markNumber(draw);
+                if (board.bingo()) {
+                    winners[bi] = true;
+                    ++numWinners;
+                    if (numWinners == boards.size()) {
+                        int sum = board.computeSumOfUnmarkedNumbers();
+
+                        std::cout << "--- Day 4 Part 2 ---\r\n";
+                        std::cout << "boardIndex=" << bi << "\r\n";
+                        std::cout << "sum=" << sum << "\r\n";
+                        std::cout << "winning number=" << draw << "\r\n";
+                        std::cout << "sum x draw=" << (sum * draw) << "\r\n";
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
