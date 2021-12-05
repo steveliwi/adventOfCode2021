@@ -4,7 +4,8 @@
 // void day2_part2();
 // void day3();
 // void day3_part2();
-void day4();
+// void day4();
+void day5();
 
 int main() {
     // day1();
@@ -13,6 +14,7 @@ int main() {
     // day2_part2();
     // day3();
     // day3_part2();
-    day4();
+    // day4();
+    day5();
     return 0;
 }
