@@ -3,15 +3,7 @@
 #include <sstream>
 #include <string>
 #include <queue>
-
-bool getLineAsInt(std::ifstream& stream, int& value) {
-    std::string line;
-    if (!getline(stream, line)) {
-        return false;
-    }
-    value = std::stoi(line);
-    return true;
-}
+#include "utils.h"
 
 void day1()  {
     std::string line;
