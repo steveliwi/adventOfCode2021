@@ -3,46 +3,52 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <cmath>
 
-std::string computeCommonSegments(std::string s1, std::string s2) {
-    std::string common;
-    for (int n=0; n<s1.size(); ++n) {
-        char c = s1.at(n);
-        if (s2.find(c) != std::string::npos) {
-            common += c;
-        }
-    }
-    return common;
-}
-
-std::string computeExclusiveSegments(std::string s1, std::string s2) {
-    std::string longer = (s1.size() > s2.size()) ? s1 : s2;
-    std::string other  = (s1.size() > s2.size()) ? s2 : s1;
-
-    std::string exclusive;
-    for (int n=0; n<longer.size(); ++n) {
-        char c = longer.at(n);
-        if (other.find(c) == std::string::npos) {
-            exclusive += c;
-        }
-    }
-    return exclusive;
-}
-
-void clearValueInList(std::vector<std::string>& list, std::string val) {
-    auto itr = std::find(list.begin(), list.end(), val);
-    itr->clear();
-}
-
 void day8() {
+    class Segments {
+        private:
+            // probably better if we use a std::set
+            std::string _val;
+        public:
+            Segments() : _val() {
+            }
+            Segments(const Segments& segment) {
+                this->_val = segment._val;
+            }
+            Segments(const std::string& val) {
+                _val = val;
+            }
+        public:
+            size_t size() const {
+                return _val.size();
+            }
+            bool contains(const Segments& other) const {
+                for (int n=0; n<other._val.size(); ++n) {
+                    char c = other._val.at(n);
+                    if (this->_val.find(c) == std::string::npos) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            Segments exclude(const Segments& other) const {
+                std::string result;
+                for (int n=0; n<this->_val.size(); ++n) {
+                    char c = this->_val.at(n);
+                    if (other._val.find(c) == std::string::npos) {
+                        result += c;
+                    }
+                }
+                return result;
+            }
+    };
     class Entry {
         public:
-            std::vector<std::string> patterns;
-            std::vector<std::string> outputs;
+            std::vector<Segments> patterns;
+            std::vector<Segments> outputs;
         private:
-            static void fillList(std::vector<std::string>& list, std::string s) {
+            static void setupList(std::vector<Segments>& list, const std::string& s) {
                 std::stringstream ss(s);
                 std::string pattern;
                 list.clear();
@@ -51,10 +57,10 @@ void day8() {
                 }
             }
         public:
-            void fill(std::string s) {
+            Entry(const std::string& s) {
                 auto pos = s.find(" | ");
-                fillList(patterns, s.substr(0, pos));
-                fillList(outputs, s.substr(pos + 3));
+                setupList(patterns, s.substr(0, pos));
+                setupList(outputs, s.substr(pos + 3));
             }
     };
 
@@ -63,17 +69,15 @@ void day8() {
 
     std::string line;
     while (getline(inputStream, line)) {
-        Entry entry;
-        entry.fill(line);
-        entries.push_back(entry);
+        entries.emplace_back(line);
     }
 
     {
         int countOf1478 = 0;
-        for (size_t entryIndex=0; entryIndex<entries.size(); ++entryIndex) {
-            const Entry &entry = entries[entryIndex];
-            for (size_t outputIndex=0; outputIndex<entry.outputs.size(); outputIndex++) {
-                const std::string& output = entry.outputs[outputIndex];
+        for (size_t entryIdx=0; entryIdx<entries.size(); ++entryIdx) {
+            const Entry &entry = entries[entryIdx];
+            for (size_t outputIdx=0; outputIdx<entry.outputs.size(); outputIdx++) {
+                const Segments& output = entry.outputs[outputIdx];
                 switch (output.size()) {
                     case 2: // digit 1
                     case 4: // digit 4
@@ -107,7 +111,7 @@ void day8() {
     // .    f  e    f  .    f  e    f  .    f
     //  gggg    gggg    ....    gggg    gggg
 
-    // Segments 'cf' are common between digit 1 and 7
+    // Segments 'cf' : digit 1
     // Digit 3 : has 5 segments and contains segments 'cf'
     // Digit 6 : has 6 segments and does not contain segments 'cf'
 
@@ -116,120 +120,119 @@ void day8() {
 
     // Digit 0: only digit left with 6 segments
 
-    // Segment c : differece between 6 and 8
+    // Segment c : difference between 6 and 8
     // Digit 2 : contains segment c
     // Digit 5 : last digit remaining
 
     {
         int sumOfAllOutputs = 0;
-        for (size_t entryIndex=0; entryIndex<entries.size(); ++entryIndex) {
-            const Entry &entry = entries[entryIndex];
+        for (size_t entryIdx=0; entryIdx<entries.size(); ++entryIdx) {
+            const Entry &entry = entries[entryIdx];
 
-            // knownPatterns[0] contains the signal pattern to represent digit 0,
-            // knownPatterns[1] contains the signal pattern to represent digit 1, and so on.
-            std::vector<std::string> knownPatterns(10); 
+            // knownPatterns[n] contains the signal pattern to represent digit n
+            // e.g. knownPatterns[0] contains the signal pattern to represent digit 0
+            std::vector<Segments> knownPatterns(10); 
 
             // Keep track of unknown patterns. Known patterns are eliminated from the list as we go.
-            std::vector<std::string> unknownPatterns;
+            // Probably not the most efficient using vector.
+            std::vector<Segments> unknownPatterns;
             for (size_t patIdx=0; patIdx<entry.patterns.size(); patIdx++) {
                 unknownPatterns.push_back(entry.patterns[patIdx]);
             }
 
             // Digits 1, 4, 7, 8 have unique number of segments
-            for (size_t patIdx=0; patIdx<entry.patterns.size(); patIdx++) {
-                const std::string& pattern = entry.patterns[patIdx];
+            for (auto itr = unknownPatterns.begin(); itr != unknownPatterns.end(); ) {
+                const Segments& pattern = *itr;
                 switch (pattern.size()) {
                     case 2: // digit 1
                         knownPatterns[1] = pattern;
-                        clearValueInList(unknownPatterns, pattern);
+                        itr = unknownPatterns.erase(itr);
                         break;
                     case 3: // digit 7
                         knownPatterns[7] = pattern;
-                        clearValueInList(unknownPatterns, pattern);
+                        itr = unknownPatterns.erase(itr);
                         break;
                     case 4: // digit 4
                         knownPatterns[4] = pattern;
-                        clearValueInList(unknownPatterns, pattern);
+                        itr = unknownPatterns.erase(itr);
                         break;
                     case 7: // digit 8
                         knownPatterns[8] = pattern;
-                        clearValueInList(unknownPatterns, pattern);
+                        itr = unknownPatterns.erase(itr);
+                        break;
+                    default:
+                        ++itr;
                         break;
                 }
             }
 
-            // Segments 'cf' are common between digit 1 and 7
-            std::string segment_cf = computeCommonSegments(knownPatterns[1], knownPatterns[7]);
+            // Segments 'cf' : digit 1
+            const Segments& segments_cf = knownPatterns[1];
 
             // Digit 3 : has 5 segments and contains segments 'cf'
             // Digit 6 : has 6 segments and does not contain segments 'cf'
-            for (size_t patIdx=0; patIdx<unknownPatterns.size(); patIdx++) {
-                const std::string& pattern = unknownPatterns[patIdx];
-                if ((pattern.size() == 5) && (computeCommonSegments(pattern, segment_cf).size() == segment_cf.size())) {
+            for (auto itr = unknownPatterns.begin(); itr != unknownPatterns.end(); ) {
+                const Segments& pattern = *itr;
+                if ((pattern.size() == 5) && pattern.contains(segments_cf)) {
                     knownPatterns[3] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
+                    itr = unknownPatterns.erase(itr);
                 }
-                else if ((pattern.size() == 6) && (computeCommonSegments(pattern, segment_cf).size() != segment_cf.size())) {
+                else if ((pattern.size() == 6) && !pattern.contains(segments_cf)) {
                     knownPatterns[6] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
+                    itr = unknownPatterns.erase(itr);
+                } else {
+                    ++itr;
                 }
             }
 
             // Segments 'be' : difference between digit 3 and 8
-            std::string segment_be = computeExclusiveSegments(knownPatterns[3], knownPatterns[8]);
+            const Segments& segments_be = knownPatterns[8].exclude(knownPatterns[3]);
 
             // Digit 9 : has 6 segments and does not contain segements 'be'
-            for (size_t patIdx=0; patIdx<unknownPatterns.size(); patIdx++) {
-                const std::string& pattern = unknownPatterns[patIdx];
-                if ((pattern.size() == 6) && (computeCommonSegments(pattern, segment_be).size() != segment_cf.size())) {
+            for (auto itr = unknownPatterns.begin(); itr != unknownPatterns.end(); ++itr) {
+                const Segments& pattern = *itr;
+                if ((pattern.size() == 6) && !pattern.contains(segments_be)) {
                     knownPatterns[9] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
+                    unknownPatterns.erase(itr);
                     break;
                 }
             }
 
             // Digit 0: only digit left with 6 segments
-            for (size_t patIdx=0; patIdx<unknownPatterns.size(); patIdx++) {
-                const std::string& pattern = unknownPatterns[patIdx];
+            for (auto itr = unknownPatterns.begin(); itr != unknownPatterns.end(); ++itr) {
+                const Segments& pattern = *itr;
                 if (pattern.size() == 6) {
                     knownPatterns[0] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
+                    unknownPatterns.erase(itr);
                     break;
                 }
             }
 
-            // Segment c : differece between 6 and 8
-            std::string segment_c = computeExclusiveSegments(knownPatterns[6], knownPatterns[8]);
+            // Segment c : difference between 6 and 8
+            const Segments& segment_c = knownPatterns[8].exclude(knownPatterns[6]);
 
             // Digit 2 : contains segment c
-            for (size_t patIdx=0; patIdx<unknownPatterns.size(); patIdx++) {
-                const std::string& pattern = unknownPatterns[patIdx];
-                if (pattern.find(segment_c) != std::string::npos) {
+            for (auto itr = unknownPatterns.begin(); itr != unknownPatterns.end(); ++itr) {
+                const Segments& pattern = *itr;
+                if (pattern.contains(segment_c)) {
                     knownPatterns[2] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
+                    unknownPatterns.erase(itr);
                     break;
                 }
             }
 
             // Digit 5 : last digit remaining
-            for (size_t patIdx=0; patIdx<unknownPatterns.size(); patIdx++) {
-                const std::string& pattern = unknownPatterns[patIdx];
-                if (!pattern.empty()) {
-                    knownPatterns[5] = pattern;
-                    clearValueInList(unknownPatterns, pattern);
-                    break;
-                }
-            }
+            knownPatterns[5] = unknownPatterns[0];
 
             // Compute the output
             int outputNumber = 0;
             for (int outputIdx=0; outputIdx<entry.outputs.size(); ++outputIdx) {
-                const std::string& output = entry.outputs[outputIdx];
+                const Segments& output = entry.outputs[outputIdx];
 
                 int digit;
                 for (digit=0; digit<knownPatterns.size(); ++digit) {
-                    const std::string& knownPattern = knownPatterns[digit];
-                    if ((output.size() == knownPattern.size()) && computeCommonSegments(output, knownPattern).size() == output.size()) {
+                    const Segments& knownPattern = knownPatterns[digit];
+                    if ((output.size() == knownPattern.size()) && output.contains(knownPattern)) {
                         break;
                     }
                 }
