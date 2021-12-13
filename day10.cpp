@@ -5,9 +5,29 @@
 #include <vector>
 #include <stack>
 #include <algorithm>
+#include <map>
 
 void day10() {
     std::ifstream inputStream("./data-day10.txt");
+
+    std::map<char, char> bracketMap = {
+        {'(', ')'},
+        {'[', ']'},
+        {'{', '}'},
+        {'<', '>'}
+    };
+    std::map<char, int> syntaxErrorPointMap = {
+        {')', 3},
+        {']', 57},
+        {'}', 1197},
+        {'>', 25137}
+    };
+    std::map<char, int> autoCompletePointMap = {
+        {'(', 1},
+        {'[', 2},
+        {'{', 3},
+        {'<', 4}
+    };
 
     int totalSyntaxErrorScore = 0;
     std::vector<uint64_t> autoCompleteScores;
@@ -16,67 +36,27 @@ void day10() {
     while (getline(inputStream, line)) {
         std::stack<char> bracketStack;
         bool mismatch = false;
-        for (size_t n=0; n<line.size(); ++n) {
+        for (size_t n=0; n<line.size() && !mismatch; ++n) {
             char c = line[n];
-            switch (c) {
-                case '(':
-                case '[':
-                case '{':
-                case '<':
-                    bracketStack.push(c);
-                    break;
-                case ')':
-                    if (bracketStack.top() != '(') {
-                        mismatch = true;
-                        totalSyntaxErrorScore += 3;
-                    }
-                    bracketStack.pop();
-                    break;
-                case ']':
-                    if (bracketStack.top() != '[') {
-                        mismatch = true;
-                        totalSyntaxErrorScore += 57;
-                    }
-                    bracketStack.pop();
-                    break;
-                case '}':
-                    if (bracketStack.top() != '{') {
-                        mismatch = true;
-                        totalSyntaxErrorScore += 1197;
-                    }
-                    bracketStack.pop();
-                    break;
-                case '>':
-                    if (bracketStack.top() != '<') {
-                        mismatch = true;
-                        totalSyntaxErrorScore += 25137;
-                    }
-                    bracketStack.pop();
-                    break;
-            }
-            if (mismatch) {
-                break;
+            if (bracketMap.find(c) != bracketMap.end()) {
+                // open bracket
+                bracketStack.push(c);
+            } else {
+                // expecting close bracket
+                char openBracket = bracketStack.top();
+                bracketStack.pop();
+                if (c != bracketMap[openBracket]) {
+                    totalSyntaxErrorScore += syntaxErrorPointMap[c];
+                    mismatch = true;
+                }
             }
         }
         if (!mismatch && !bracketStack.empty()) {
             uint64_t score = 0;
             while (!bracketStack.empty()) {
-                char c = bracketStack.top();
-                switch (c) {
-                    case '(':
-                        score = (score * 5) + 1;
-                        break;
-                    case '[':
-                        score = (score * 5) + 2;
-                        break;
-                    case '{':
-                        score = (score * 5) + 3;
-                        break;
-                    case '<':
-                        score = (score * 5) + 4;
-                        break;
-                }
+                char openBracket = bracketStack.top();
                 bracketStack.pop();
+                score = (score * 5) + autoCompletePointMap[openBracket];
             }
             autoCompleteScores.push_back(score);
         }
