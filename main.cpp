@@ -11,7 +11,8 @@
 // void day7();
 // void day8();
 // void day9();
-void day10();
+// void day10();
+void day11();
 
 int main() {
     // day1();
@@ -27,6 +28,7 @@ int main() {
     // day7();
     // day8();
     // day9();
-    day10();
+    // day10();
+    day11();
     return 0;
 }
