@@ -18,6 +18,7 @@ class Node {
 };
 typedef std::map<std::string, std::unique_ptr<Node>> NameToNodeMap;
 
+// Note that visitedNodes must be pass-by-value (not reference).
 void traverseNode(Node* node, std::string pathInProgress, std::set<std::string> visitedNodes, bool allowDoubleVisit, std::vector<std::string>& completePaths) {
     if (!pathInProgress.empty()) {
         pathInProgress += ",";
@@ -45,7 +46,7 @@ void traverseNode(Node* node, std::string pathInProgress, std::set<std::string> 
     for (size_t n=0; n<node->connectedNodes.size(); ++n) {
         Node* connectedNode = node->connectedNodes[n];
         if (connectedNode->name != "start") {
-            traverseNode(node->connectedNodes[n], pathInProgress, visitedNodes, allowDoubleVisit, completePaths);
+            traverseNode(connectedNode, pathInProgress, visitedNodes, allowDoubleVisit, completePaths);
         }
     }
 }
