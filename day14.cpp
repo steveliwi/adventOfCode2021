@@ -24,6 +24,19 @@ void processPolymer(const Polymer& src, const Rules& rules, Polymer& dst, Counte
     }
 }
 
+void getCounterMinMax(const Counter& counter, uint64_t& minValue, uint64_t& maxValue) {
+    minValue = std::numeric_limits<uint64_t>::max();
+    maxValue = std::numeric_limits<uint64_t>::min();
+    for (auto const& entry : counter) {
+        if (minValue > entry.second) {
+            minValue = entry.second;
+        }
+        if (maxValue < entry.second) {
+            maxValue = entry.second;
+        }
+    }
+}
+
 void day14() {
     std::ifstream inputStream("./data-day14.txt");
 
@@ -62,17 +75,9 @@ void day14() {
         }
 
         std::cout << "--- Day 14 ---" << std::endl;
-        uint64_t minQuantity = std::numeric_limits<uint64_t>::max();
-        uint64_t maxQuantity = std::numeric_limits<uint64_t>::min();
-        for (auto const& entry : counter) {
-            if (minQuantity > entry.second) {
-                minQuantity = entry.second;
-            }
-            if (maxQuantity < entry.second) {
-                maxQuantity = entry.second;
-            }
-        }
-        std::cout << "max-min=" << (maxQuantity - minQuantity) << std::endl;
+        uint64_t minValue, maxValue;
+        getCounterMinMax(counter, minValue, maxValue);
+        std::cout << "max-min=" << (maxValue - minValue) << std::endl;
     }
 
     {
@@ -84,16 +89,8 @@ void day14() {
         }
 
         std::cout << "--- Day 14 Part 2 ---" << std::endl;
-        uint64_t minQuantity = std::numeric_limits<uint64_t>::max();
-        uint64_t maxQuantity = std::numeric_limits<uint64_t>::min();
-        for (auto const& entry : counter) {
-            if (minQuantity > entry.second) {
-                minQuantity = entry.second;
-            }
-            if (maxQuantity < entry.second) {
-                maxQuantity = entry.second;
-            }
-        }
-        std::cout << "max-min=" << (maxQuantity - minQuantity) << std::endl;
+        uint64_t minValue, maxValue;
+        getCounterMinMax(counter, minValue, maxValue);
+        std::cout << "max-min=" << (maxValue - minValue) << std::endl;
     }
 }
