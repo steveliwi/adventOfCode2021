@@ -27,13 +27,12 @@ typedef std::vector<std::vector<Vertex>> Grid;
 
 class ProxyVertex {
     public:
-        Grid* grid;
         Vertex* vertex;
     private:
         uint32_t pathCost;  // keep a local immutable copy to decouple it from the vertex's pathCost, such that priority queue order is maintained for deprecated entries.
     public:
-        ProxyVertex(Grid* _grid, Vertex* _vertex) :
-            grid(_grid), vertex(_vertex), pathCost(_vertex->pathCost) {
+        ProxyVertex(Vertex* _vertex) :
+            vertex(_vertex), pathCost(_vertex->pathCost) {
         }
         uint32_t getPathCost() const {
             return pathCost;
@@ -55,7 +54,7 @@ void dijkstra(Grid& grid) {
     // initialize queue
     for (int row=0; row<grid_max_row; ++row) {
         for (int col=0; col<grid_max_col; ++col) {
-            q.emplace(&grid, &grid[row][col]);
+            q.emplace(&grid[row][col]);
         }
     }
 
@@ -107,7 +106,11 @@ void dijkstra(Grid& grid) {
             if (alt < v->pathCost) {
                 v->pathCost = alt;
                 v->prev = &u;
-                q.emplace(&grid, v);
+                // std::priortiy_queue does not support decrease_priority().
+                // The workaroud is to insert a new entry with the updated (smaller) pathCost.
+                // Since its pathCost is smaller, the new entry will be popped sooner than the original one.
+                // The deprecated entry should be ignored when its popped at a later time.
+                q.emplace(v);
             }
         }
 
