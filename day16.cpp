@@ -5,13 +5,12 @@
 #include <vector>
 
 class BitReader {
-    public:
-        std::vector<uint8_t> data;
     private:
+        std::vector<uint8_t> data;
         uint32_t nibble_pos;
         uint32_t bit_pos;
     public:
-        BitReader() : nibble_pos(0), bit_pos(0) {
+        BitReader(std::vector<uint8_t>&& _data) : data(std::move(_data)), nibble_pos(0), bit_pos(0) {
         }
         uint64_t numBitsRead() const {
             return (nibble_pos * 4) + bit_pos;
@@ -128,12 +127,13 @@ void day16() {
     std::string line;
     getline(inputStream, line);
 
-    BitReader br;
-    std::vector<uint8_t>& data = br.data;
+    std::vector<uint8_t> data;
     for (char c : line) {
         uint8_t val = ((c >= '0') && (c <='9')) ? (c - '0') : (10 + (c - 'A'));
         data.push_back(val);
     }
+    BitReader br(std::move(data));
+    data.clear(); // restore data back to a known state, can be skipped if data is never used again
 
     uint64_t sumOfVersions = 0;
     uint64_t packetValue = processPacket(br, sumOfVersions);
